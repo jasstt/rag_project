@@ -1,0 +1,6 @@
+chromadb
+sentence-transformers
+rank_bm25
+PyMuPDF
+google-genai
+python-dotenv

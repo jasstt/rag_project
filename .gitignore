@@ -1,0 +1,5 @@
+# .env dosyasını git'e gönderme!
+.env
+__pycache__/
+*.pyc
+db/
