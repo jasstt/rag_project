@@ -1,0 +1,11 @@
+Yapay Zeka ve Makine Öğrenmesi
+
+Yapay zeka (YZ), makinelere insan benzeri bilişsel yetenekler kazandırmayı hedefleyen geniş bir bilgisayar bilimleri dalıdır. Temel amacı; öğrenme, akıl yürütme, problem çözme, algılama ve dil anlama gibi yetileri bilgisayar sistemlerine entegre etmektir. Geleneksel yazılımlar kural tabanlı çalışırken, modern yapay zeka sistemleri veri üzerinden kendi kurallarını türeterek karmaşık görevlerin üstesinden gelebilir.
+
+Makine öğrenmesi (MO), yapay zekanın en kritik alt kümesidir. Bu yaklaşımda algoritmalar, açıkça programlanmak yerine büyük miktarda veriyi analiz ederek kalıpları (pattern) öğrenir. Makine öğrenmesi algoritmaları genel olarak üç ana kategoriye ayrılır: Gözetimli öğrenme (supervised learning), gözetimsiz öğrenme (unsupervised learning) ve pekiştirmeli öğrenme (reinforcement learning).
+
+Gözetimli öğrenmede model, etiketlenmiş girdi ve çıktı verileri kullanılarak eğitilir. Sınıflandırma (örneğin e-postaların spam olup olmadığını belirleme) ve regresyon (örneğin ev fiyatlarını tahmin etme) problemleri bu kategoriye girer. Gözetimsiz öğrenmede ise veriler etiketsizdir; model verilerin içindeki doğal yapıları keşfetmeye çalışır (kümeleme veya boyut azaltma algoritmaları gibi).
+
+Pekiştirmeli öğrenme (RL), bir ajanın bir çevre içinde eylemler gerçekleştirerek ödül sinyallerini maksimize etmeye çalıştığı bir öğrenme türüdür. Ajan, hangi eylemlerin yüksek ödül, hangilerinin ceza getirdiğini deneme yanılma yoluyla keşfeder. Bu yöntem özellikle robotik kontrol, otonom araçlar ve AlphaGo gibi gelişmiş strateji oyunlarında büyük başarı göstermiştir.
+
+Derin öğrenme (Deep Learning), insan beyninin çalışma prensibinden ilham alan yapay sinir ağlarını kullanan bir makine öğrenmesi tekniğidir. Çok sayıda gizli katmandan (hidden layer) oluşan bu ağlar, verilerdeki hiyerarşik özellikleri otomatik olarak çıkarabilir. Derin öğrenme sayesinde bilgisayarlı görü (computer vision) ve doğal dil işleme alanlarında devrim niteliğinde ilerlemeler kaydedilmiştir. CNN (Evrişimli Sinir Ağları) görüntü analizinde, RNN (Yinelenen Sinir Ağları) ise zaman serisi verilerinde öne çıkmaktadır.

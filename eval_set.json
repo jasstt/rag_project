@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "question": "Tokenization nedir ve metin ön işlemede neden kullanılır?",
+    "expected_keywords": ["simgeleştirme", "ayırma", "alt kelime"]
+  },
+  {
+    "question": "Pekiştirmeli öğrenme nasıl çalışır?",
+    "expected_keywords": ["ajan", "ödül", "ceza", "çevre"]
+  },
+  {
+    "question": "Özellik mühendisliği (Feature Engineering) amacı nedir?",
+    "expected_keywords": ["performans", "yeni", "anlamlı", "özellikler"]
+  },
+  {
+    "question": "Transformer mimarisinin geleneksel RNN modellerine göre avantajı nedir?",
+    "expected_keywords": ["öz-dikkat", "self-attention", "hafıza", "paralel işleme"]
+  },
+  {
+    "question": "Sınıflandırma problemlerinde dengesiz veri seti varsa hangi metrikler kullanılmalıdır?",
+    "expected_keywords": ["kesinlik", "precision", "duyarlılık", "f1"]
+  }
+]

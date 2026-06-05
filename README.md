@@ -89,6 +89,23 @@ Then run the evaluation script to see how well the pipeline performs (verifying 
 ```bash
 python src/eval.py
 ```
+*(Note: If you are using the free tier of the Gemini API, you may occasionally see a `503 UNAVAILABLE` error during heavy automated eval tests. Simply wait a minute and retry.)*
+
+## 📊 Dense vs Hybrid Search Comparison
+
+We ran a comparison test to demonstrate why Hybrid Search is necessary. When querying *"Transformer mimarisinin avantajları nelerdir?"* (What are the advantages of the Transformer architecture?):
+
+**Only Dense Search (ChromaDB):**
+1. `nlp_temelleri.txt` ✅ (Correctly identifies Transformers)
+2. `veri_bilimi.txt` ❌ (Completely unrelated text about Data Science metrics)
+3. `veri_bilimi.txt` ❌ (Unrelated text about Feature Engineering)
+*Why? Dense search alone can sometimes be biased by the semantic structure of sentences rather than strict keyword matching.*
+
+**Hybrid Search (Dense + BM25 + RRF):**
+1. `nlp_temelleri.txt` ✅ (Correctly identifies Transformers)
+2. `nlp_temelleri.txt` ✅ (Related context about NLP and Word Embeddings)
+3. `veri_bilimi.txt` ❌
+*Why? BM25 caught the exact keyword "Transformer" and "RNN" to boost the relevance of the NLP document, resulting in much richer and more accurate candidates for the LLM.*
 
 ## 🛠 Technologies Used
 * **[ChromaDB](https://www.trychroma.com/):** Vector database for semantic search.

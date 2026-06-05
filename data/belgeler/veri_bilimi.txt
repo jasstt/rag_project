@@ -1,0 +1,11 @@
+Veri Bilimi ve Özellik Mühendisliği
+
+Veri bilimi, yapılandırılmış (structured) ve yapılandırılmamış (unstructured) büyük veri kümelerinden anlamlı bilgiler ve eyleme dönüştürülebilir öngörüler (insights) çıkarmayı amaçlayan çok disiplinli bir alandır. İstatistik, bilgisayar bilimleri, veri madenciliği ve alan uzmanlığının (domain knowledge) birleşimiyle ortaya çıkmıştır. Veri biliminin kalbinde veriyi anlama, temizleme ve modelleme süreçleri yatar.
+
+Veri analizi sürecinde Python programlama dili ve ekosistemi endüstri standardı haline gelmiştir. Pandas kütüphanesi, veri manipülasyonu ve analizi için vazgeçilmez bir araçtır. DataFrame adını verdiği iki boyutlu veri yapılarıyla tablo formatındaki verilerin kolayca filtrelenmesi, gruplanması, birleştirilmesi ve temizlenmesini sağlar. Eksik verilerin (missing values) imputasyonu veya aykırı değerlerin (outliers) tespit edilmesi genelde Pandas fonksiyonlarıyla gerçekleştirilir.
+
+Özellik mühendisliği (Feature Engineering), ham veriden makine öğrenmesi modellerinin performansını artıracak yeni ve anlamlı özellikler türetme sanatıdır. İyi özellikler, algoritmaların verilerdeki gizli yapıları daha kolay kavramasını sağlar. Kategorik değişkenlerin sayısal verilere dönüştürülmesi (one-hot encoding), verilerin ölçeklendirilmesi (normalization/standardization) ve metinlerden TF-IDF gibi istatistiksel vektörler elde edilmesi bu sürecin parçalarıdır.
+
+Makine öğrenmesi modellerinin geliştirilmesi kadar, bu modellerin doğru bir şekilde değerlendirilmesi (Model Evaluation) de kritik öneme sahiptir. Modellerin ezberlemeye (overfitting) düşüp düşmediğini kontrol etmek için veriler eğitim (train), doğrulama (validation) ve test (test) kümelerine ayrılır. K-Katlı çapraz doğrulama (K-Fold Cross Validation), modelin farklı veri setlerindeki kararlılığını ölçmek için yaygın olarak kullanılır.
+
+Sınıflandırma problemlerinde doğruluğu (accuracy) tek başına kullanmak yanıltıcı olabilir, özellikle veri setinde dengesizlik (imbalanced data) varsa. Bu tür durumlarda Kesinlik (Precision), Duyarlılık (Recall/Sensitivity) ve bu ikisinin harmonik ortalaması olan F1 Skoru gibi daha spesifik metrikler incelenmelidir. Regresyon modellerinde ise Ortalama Kare Hatası (MSE) veya Ortalama Mutlak Hata (MAE) gibi metriklerle modelin hata payı hesaplanır.

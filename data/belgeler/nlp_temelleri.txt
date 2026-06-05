@@ -1,0 +1,11 @@
+Doğal Dil İşleme (NLP) Temelleri
+
+Doğal Dil İşleme (Natural Language Processing - NLP), insan dilinin bilgisayarlar tarafından anlaşılması, yorumlanması ve üretilmesi üzerine odaklanan bir yapay zeka alanıdır. Günümüzde makine çevirisi, duygu analizi (sentiment analysis), sohbet robotları, metin özetleme ve bilgi çıkarımı gibi birçok farklı uygulamada yoğun olarak kullanılmaktadır. İnsan dili kuralsız, çok anlamlı ve bağlama bağlı olduğu için NLP oldukça zorlu bir problem alanıdır.
+
+Metin ön işleme (text preprocessing), her NLP projesinin ilk adımıdır. Bu süreçte metin öncelikle tokenization (simgeleştirme) adı verilen bir işlemden geçer. Tokenization, bir metni cümlelere, kelimelere veya daha küçük alt kelime (sub-word) birimlerine ayırma işlemidir. Stop words (bağlaçlar, edatlar gibi anlamsal ağırlığı düşük kelimeler) genellikle temizlenir, noktalama işaretleri kaldırılır ve kelimeler köklerine (stemming veya lemmatization) indirgenerek kelime dağarcığı küçültülür.
+
+Kelime Gömme (Word Embeddings), kelimelerin veya metin parçalarının sürekli ve yoğun sayısal vektörlerle ifade edilmesidir. Word2Vec, GloVe ve FastText gibi geleneksel yöntemler, kelimeleri anlamsal ilişkilerine göre çok boyutlu uzayda konumlandırır. Bu sayede "kral" ve "kraliçe" kelimelerinin vektörel mesafesi çok yakın olurken, tamamen alakasız kelimeler uzak konumlanır. Böylece bilgisayarlar dilin anlamsal bağlamını matematiksel olarak kavrayabilir.
+
+Son yıllarda Transformer mimarisi, doğal dil işlemede çığır açan bir devrim yaratmıştır. "Attention Is All You Need" makalesiyle tanıtılan bu mimari, cümle içindeki kelimelerin birbirleriyle olan ilişkilerini uzun mesafelerde dahi başarıyla takip edebilen Öz-Dikkat (Self-Attention) mekanizmasını kullanır. Bu sayede RNN veya LSTM mimarilerindeki hafıza kaybı sorunları çözülmüş ve paralel işleme kapasitesi büyük ölçüde artmıştır.
+
+Büyük Dil Modelleri (LLMs) olan BERT, GPT serisi, Claude ve Llama gibi sistemler temelini Transformer mimarisinden alır. BERT, metni çift yönlü olarak inceleyip kelimelerin bağlamını mükemmel kavrarken; GPT ailesi otoregresif bir yapı kullanarak bir sonraki kelimeyi tahmin etme ve içerik üretme konusunda uzmanlaşmıştır. Bu modeller milyarlarca parametre ile devasa metin külliyatları üzerinde eğitilmekte ve az-atışlı öğrenme (few-shot learning) yetenekleri sergilemektedir.
