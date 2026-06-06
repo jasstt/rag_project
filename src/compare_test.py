@@ -30,9 +30,10 @@ def test_compare(query: str):
     print("\n[1] SADECE DENSE ARAMA (ChromaDB) TOP 3:")
     print("-" * 50)
     for i in range(len(dense_results["ids"][0])):
-        text = dense_results["documents"][0][i][:100]
+        chunk_id = dense_results["ids"][0][i]
+        text = dense_results["documents"][0][i][:100].replace("\n", " ")
         source = dense_results["metadatas"][0][i]["source"]
-        print(f"{i+1}. {source} => {text}...")
+        print(f"{i+1}. [ID: {chunk_id}] {source} => {text}...")
 
     # Hybrid Arama (Dense + BM25 + RRF) - `search.py` içindeki search fonksiyonu
     hybrid_results = search(query, top_k=3)
@@ -40,9 +41,10 @@ def test_compare(query: str):
     print("\n[2] HİBRİT ARAMA (Dense + BM25 + RRF) TOP 3:")
     print("-" * 50)
     for i, res in enumerate(hybrid_results[:3]):
-        text = res["text"][:100]
+        chunk_id = res["id"]
+        text = res["text"][:100].replace("\n", " ")
         source = res["metadata"]["source"]
-        print(f"{i+1}. {source} => {text}...")
+        print(f"{i+1}. [ID: {chunk_id}] {source} => {text}...")
 
 if __name__ == "__main__":
     test_query = "Transformer mimarisinin avantajları nelerdir?"

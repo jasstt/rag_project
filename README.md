@@ -107,6 +107,17 @@ We ran a comparison test to demonstrate why Hybrid Search is necessary. When que
 3. `veri_bilimi.txt` ❌
 *Why? BM25 caught the exact keyword "Transformer" and "RNN" to boost the relevance of the NLP document, resulting in much richer and more accurate candidates for the LLM.*
 
+## 🧪 Eval Results
+
+| Metric | Score |
+|--------|-------|
+| Overall Accuracy | 80% (4/5) |
+| Citation Coverage | 14/14 successful citations |
+| Hybrid vs Dense | BM25 removed 2 irrelevant chunks |
+| Resilience | 503 errors handled via retry + fallback |
+
+Tested on 3 Turkish documents (Yapay Zeka, Veri Bilimi, NLP Temelleri).
+
 ## 🛠 Technologies Used
 * **[ChromaDB](https://www.trychroma.com/):** Vector database for semantic search.
 * **[Sentence-Transformers](https://sbert.net/):** Lightweight embedding generation.

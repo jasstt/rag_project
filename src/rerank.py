@@ -5,6 +5,7 @@ en alakalı 5 parçayı sıralı döner.
 
 import os
 import json
+import time
 from google import genai
 from dotenv import load_dotenv
 
@@ -50,11 +51,27 @@ def rerank(query: str, candidates: list[dict]) -> list[dict]:
     )
 
     print(f"[RERANK] Gemini'ye {len(candidates)} aday gönderiliyor...")
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt
-    )
-    raw = response.text.strip()
+    
+    max_retries = 3
+    retry_delay = 5
+    raw = ""
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt
+            )
+            raw = response.text.strip()
+            break
+        except Exception as e:
+            err_msg = str(e)
+            print(f"[UYARI] Gemini API hatası ({attempt + 1}/{max_retries}): {err_msg}")
+            if attempt < max_retries - 1:
+                print(f"        {retry_delay} saniye sonra tekrar deneniyor...")
+                time.sleep(retry_delay)
+            else:
+                print("[HATA] Reranking başarısız oldu. İlk 5 sonuç doğrudan dönülüyor.")
+                return candidates[:TOP_RERANK]
 
     # JSON parse
     try:

@@ -1,33 +1,73 @@
 {
   "total_questions": 5,
-  "passed": 0,
-  "failed": 5,
-  "accuracy": 0.0,
+  "passed": 4,
+  "failed": 1,
+  "accuracy": 0.8,
   "results": [
     {
       "question": "Tokenization nedir ve metin ön işlemede neden kullanılır?",
-      "error": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}",
-      "passed": false
+      "answer_preview": "Tokenization (simgeleştirme), bir metni cümlelere, kelimelere veya daha küçük alt kelime (sub-word) birimlerine ayırma işlemidir [1].",
+      "source_count": 5,
+      "citation_check": {
+        "citation_count": 1,
+        "valid_citations": 1,
+        "invalid_citations": [],
+        "citation_coverage": 1.0
+      },
+      "keyword_relevance": true,
+      "passed": true
     },
     {
       "question": "Pekiştirmeli öğrenme nasıl çalışır?",
-      "error": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}",
-      "passed": false
+      "answer_preview": "Pekiştirmeli öğrenme (RL), bir ajanın bir çevre içinde çeşitli eylemler gerçekleştirerek ödül sinyallerini maksimize etmeye çalıştığı bir öğrenme türüdür [3]. \n\nBu yöntemde ajan, hangi eylemlerin yüksek ödül, hangilerinin ise ceza getirdiğini deneme yanılma yoluyla keşfeder [1]. Pekiştirmeli öğrenme",
+      "source_count": 5,
+      "citation_check": {
+        "citation_count": 5,
+        "valid_citations": 5,
+        "invalid_citations": [],
+        "citation_coverage": 0.625
+      },
+      "keyword_relevance": true,
+      "passed": true
     },
     {
       "question": "Özellik mühendisliği (Feature Engineering) amacı nedir?",
-      "error": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}",
-      "passed": false
+      "answer_preview": "Özellik mühendisliğinin (Feature Engineering) amacı, ham veriden makine öğrenmesi modellerinin performansını artıracak yeni ve anlamlı özellikler türetmektir [1]. Bu süreçte oluşturulan iyi özellikler, algoritmaların verilerdeki gizli yapıları daha kolay kavramasını sağlamaktadır [1].\n\n**Kaynaklar:*",
+      "source_count": 5,
+      "citation_check": {
+        "citation_count": 3,
+        "valid_citations": 3,
+        "invalid_citations": [],
+        "citation_coverage": 0.6
+      },
+      "keyword_relevance": true,
+      "passed": true
     },
     {
       "question": "Transformer mimarisinin geleneksel RNN modellerine göre avantajı nedir?",
-      "error": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}",
+      "answer_preview": "Transformer mimarisinin geleneksel RNN modellerine göre avantajları şunlardır:\n\n* **Hafıza Kaybı Sorununun Çözülmesi:** RNN veya LSTM mimarilerinde karşı",
+      "source_count": 5,
+      "citation_check": {
+        "citation_count": 0,
+        "valid_citations": 0,
+        "invalid_citations": [],
+        "citation_coverage": 0.0
+      },
+      "keyword_relevance": false,
       "passed": false
     },
     {
       "question": "Sınıflandırma problemlerinde dengesiz veri seti varsa hangi metrikler kullanılmalıdır?",
-      "error": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}",
-      "passed": false
+      "answer_preview": "Sınıflandırma problemlerinde veri setinde dengesizlik (imbalanced data) olması durumunda doğruluğu (accuracy) tek başına kullanmak yanıltıcı olabilmektedir [1]. Bu tür durumlarda şu spesifik metriklerin incelenmesi gerekir:\n\n* **Kesinlik (Precision)** [1]\n* **Duyarlılık (Recall/Sensitivity)** [1]\n* ",
+      "source_count": 5,
+      "citation_check": {
+        "citation_count": 5,
+        "valid_citations": 5,
+        "invalid_citations": [],
+        "citation_coverage": 0.625
+      },
+      "keyword_relevance": true,
+      "passed": true
     }
   ]
 }
