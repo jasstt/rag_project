@@ -1,5 +1,10 @@
 # RAG Pipeline with Hybrid Search and Gemini 
 
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Gemini](https://img.shields.io/badge/Gemini-API-orange)
+![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_DB-green)
+![BM25](https://img.shields.io/badge/BM25-Hybrid_Search-purple)
+
 This repository contains an advanced Retrieval-Augmented Generation (RAG) pipeline that combines hybrid search (Dense + Sparse) with Reciprocal Rank Fusion (RRF), and leverages Google's Gemini models for powerful reranking and response generation with precise source citations.
 
 ## 🌟 Key Features
@@ -117,6 +122,51 @@ We ran a comparison test to demonstrate why Hybrid Search is necessary. When que
 | Resilience | 503 errors handled via retry + fallback |
 
 Tested on 3 Turkish documents (Yapay Zeka, Veri Bilimi, NLP Temelleri).
+
+## 🎬 Demo
+
+```
+$ python main.py
+
+==================================================
+   RAG Pipeline -- Soru-Cevap
+==================================================
+
+❓ SORU: Transformer mimarisinin geleneksel RNN modellerine göre avantajı nedir?
+
+🔍 [1/3] Hibrit arama yapılıyor (Dense + BM25 + RRF)...
+   → 7 aday chunk bulundu.
+
+🎯 [2/3] Reranking yapılıyor (Gemini)...
+[RERANK] Gemini'ye 7 aday gönderiliyor...
+[RERANK] Top 5 parça seçildi.
+
+✍️  [3/3] Yanıt üretiliyor (Gemini)...
+[GENERATE] Yanıt üretildi (490 karakter).
+
+============================================================
+📝 YANIT:
+------------------------------------------------------------
+Transformer mimarisi, RNN'ye kıyasla birçok kritik avantaj sunar:
+
+* **Paralel İşleme:** RNN'ler sıralı işler; Transformer tüm sekansı
+  aynı anda işler. Bu eğitimi dramatik biçimde hızlandırır [1].
+* **Öz-Dikkat (Self-Attention):** Cümledeki tüm kelimeler arasındaki
+  uzun menzilli bağımlılıkları doğrudan yakalar [1].
+* **Hafıza Kaybı Yok:** RNN'lerin gradient vanishing sorunu yoktur;
+  Transformer bu problemi mimari olarak aşar [2].
+
+📚 KAYNAKLAR: [1] nlp_temelleri.txt  [2] nlp_temelleri.txt
+============================================================
+
+[EVAL] 5 soru değerlendiriliyor...
+[1/5] ✓ BAŞARILI — Atıf: 1/1
+[2/5] ✓ BAŞARILI — Atıf: 5/5
+[3/5] ✓ BAŞARILI — Atıf: 3/3
+[4/5] ✗ BAŞARISIZ — Atıf: 0/0
+[5/5] ✓ BAŞARILI — Atıf: 5/5
+[SONUÇ] Doğruluk oranı: 80.0% (4/5)
+```
 
 ## 🛠 Technologies Used
 * **[ChromaDB](https://www.trychroma.com/):** Vector database for semantic search.
