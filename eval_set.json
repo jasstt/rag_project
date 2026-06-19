@@ -18,5 +18,9 @@
   {
     "question": "Sınıflandırma problemlerinde dengesiz veri seti varsa hangi metrikler kullanılmalıdır?",
     "expected_keywords": ["kesinlik", "precision", "duyarlılık", "f1"]
+  },
+  {
+    "question": "Tokenization tam olarak nedir?",
+    "expected_keywords": ["simge", "parçalama"]
   }
 ]

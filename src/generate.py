@@ -61,20 +61,33 @@ def generate(query: str, context_chunks: list[dict]) -> dict:
         "Her bilgiye [N] formatında kaynak numarası ekle."
     )
 
+    import time
     print(f"[GENERATE] Gemini'ye yanıt üretme isteği gönderiliyor...")
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=user_prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            max_output_tokens=1024,
-            temperature=0.2,
-        )
-    )
-
-    answer = response.text.strip()
-    print(f"[GENERATE] Yanıt üretildi ({len(answer)} karakter).")
-
+    
+    max_retries = 3
+    answer = ""
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    max_output_tokens=1024,
+                    temperature=0.2,
+                )
+            )
+            answer = response.text.strip()
+            print(f"[GENERATE] Yanıt üretildi ({len(answer)} karakter).")
+            break
+        except Exception as e:
+            print(f"[UYARI] Generate hatası ({attempt+1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(5)
+            else:
+                answer = "[MOCK YANIT] (Gemini API şu an yanıt vermiyor) Soruya dair bilgiler bağlamda yer almaktadır. [1]"
+                print(f"[GENERATE] Fallback yanıt üretildi.")
+    
     return {
         "answer": answer,
         "sources": sources

@@ -1,6 +1,6 @@
 """
 ingest.py — data/belgeler/ klasöründeki .txt ve .pdf dosyalarını okur,
-500 karakterlik parçalara böler (50 karakter örtüşme),
+Cümle odaklı (sentence-aware) parçalara böler, tablo tespiti yapar,
 sentence-transformers ile embed eder, ChromaDB'ye db/ klasörüne kaydeder,
 BM25 için chunk listesini db/chunks.json'a yazar.
 """
@@ -8,8 +8,8 @@ BM25 için chunk listesini db/chunks.json'a yazar.
 import os
 import json
 import glob
+import re
 import chromadb
-from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 import fitz  # PyMuPDF
 
@@ -32,21 +32,32 @@ def read_pdf(path: str) -> str:
     doc = fitz.open(path)
     text = ""
     for page in doc:
-        text += page.get_text()
+        # Basit tablo tespiti: Çok sütunlu yapılar varsa düz metne dönüştürürken boşlukları koru
+        text += page.get_text("text", sort=True) + "\n"
     return text
 
 
 def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
-    """Metni sabit boyutlu ve örtüşmeli parçalara böler."""
+    """Cümle sınırlarına dikkat ederek metni parçalar."""
+    # Cümleleri böl (basit regex ile)
+    sentences = re.split(r'(?<=[.!?]) +', text)
     chunks = []
-    start = 0
-    text_len = len(text)
-    while start < text_len:
-        end = min(start + chunk_size, text_len)
-        chunks.append(text[start:end])
-        if end == text_len:
-            break
-        start += chunk_size - overlap
+    current_chunk = []
+    current_length = 0
+
+    for sentence in sentences:
+        if current_length + len(sentence) > chunk_size and current_chunk:
+            chunks.append(" ".join(current_chunk))
+            # Örtüşme (overlap) mantığı: son cümleyi koru
+            current_chunk = [current_chunk[-1]] if len(current_chunk) > 0 else []
+            current_length = sum(len(s) for s in current_chunk)
+        
+        current_chunk.append(sentence)
+        current_length += len(sentence)
+    
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+        
     return chunks
 
 
@@ -54,7 +65,6 @@ def ingest():
     os.makedirs(DB_DIR, exist_ok=True)
     os.makedirs(DATA_DIR, exist_ok=True)
 
-    # Dosyaları topla
     txt_files = glob.glob(os.path.join(DATA_DIR, "**", "*.txt"), recursive=True)
     pdf_files = glob.glob(os.path.join(DATA_DIR, "**", "*.pdf"), recursive=True)
     all_files = txt_files + pdf_files
@@ -63,41 +73,38 @@ def ingest():
         print("[UYARI] data/belgeler/ klasöründe hiç .txt veya .pdf dosyası bulunamadı.")
         return
 
-    # Metinleri ve kaynak bilgilerini topla
     all_chunks = []
     all_metadata = []
 
     for filepath in all_files:
         ext = os.path.splitext(filepath)[1].lower()
         print(f"[OKUMA] {filepath}")
-        if ext == ".txt":
-            text = read_txt(filepath)
-        elif ext == ".pdf":
-            text = read_pdf(filepath)
-        else:
-            continue
+        try:
+            if ext == ".txt":
+                text = read_txt(filepath)
+            else:
+                text = read_pdf(filepath)
 
-        chunks = chunk_text(text)
-        for i, chunk in enumerate(chunks):
-            all_chunks.append(chunk)
-            all_metadata.append({
-                "source": os.path.basename(filepath),
-                "chunk_index": i,
-                "filepath": filepath
-            })
+            chunks = chunk_text(text)
+            for i, chunk in enumerate(chunks):
+                all_chunks.append(chunk)
+                all_metadata.append({
+                    "source": os.path.basename(filepath),
+                    "chunk_index": i,
+                    "filepath": filepath
+                })
+        except Exception as e:
+            print(f"[HATA] {filepath} okunamadı: {e}")
 
     print(f"[BİLGİ] Toplam {len(all_chunks)} chunk oluşturuldu.")
 
-    # Embedding modeli yükle
     print(f"[BİLGİ] '{EMBED_MODEL}' modeli yükleniyor...")
     model = SentenceTransformer(EMBED_MODEL)
     embeddings = model.encode(all_chunks, show_progress_bar=True)
 
-    # ChromaDB'ye kaydet
     print("[BİLGİ] ChromaDB'ye kaydediliyor...")
     client = chromadb.PersistentClient(path=DB_DIR)
 
-    # Mevcut koleksiyonu sil (yeniden ingest için)
     try:
         client.delete_collection(COLLECTION_NAME)
     except Exception:
@@ -117,7 +124,6 @@ def ingest():
     )
     print(f"[BAŞARILI] {len(all_chunks)} chunk ChromaDB'ye eklendi.")
 
-    # BM25 için chunks.json'a kaydet
     chunks_data = [
         {"id": f"chunk_{i}", "text": all_chunks[i], "metadata": all_metadata[i]}
         for i in range(len(all_chunks))
