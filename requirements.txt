@@ -5,3 +5,6 @@ PyMuPDF
 google-genai
 python-dotenv
 nltk
+pyyaml
+fastapi
+uvicorn[standard]

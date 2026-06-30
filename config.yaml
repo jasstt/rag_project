@@ -1,0 +1,43 @@
+# ============================================================
+# config.yaml — Hybrid RAG Pipeline Central Configuration
+# ============================================================
+
+# --- Embedding Model ---
+embedding:
+  model: "all-MiniLM-L6-v2"
+
+# --- Chunking ---
+chunking:
+  chunk_size: 500
+  chunk_overlap: 50
+
+# --- Vector Database (ChromaDB) ---
+vectordb:
+  collection_name: "rag_collection"
+  db_dir: "db"
+
+# --- Retrieval ---
+retrieval:
+  top_k: 20
+  rrf_k: 60          # Reciprocal Rank Fusion constant
+
+# --- Reranker ---
+reranker:
+  mode: "local"       # "local" | "gemini"
+  top_rerank: 5
+  skip_threshold: 0.03   # Skip reranker if top-1 beats top-2 by this margin
+  local_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+# --- LLM (Gemini) ---
+llm:
+  model: "gemini-flash-latest"
+  max_output_tokens: 1024
+  temperature: 0.2
+  max_retries: 3
+  retry_delay_seconds: 5
+
+# --- Data Paths ---
+paths:
+  data_dir: "data/belgeler"
+  chunks_json: "db/chunks.json"
+  logs_dir: "logs"

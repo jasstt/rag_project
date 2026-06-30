@@ -1,176 +1,212 @@
-# RAG Pipeline with Hybrid Search and Gemini 
+# Hybrid RAG Pipeline
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue)
-![Gemini](https://img.shields.io/badge/Gemini-API-orange)
-![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_DB-green)
-![BM25](https://img.shields.io/badge/BM25-Hybrid_Search-purple)
+> **v1.2 — Modular Architecture** | Dense + BM25 + RRF + Reranking + Gemini Generation
 
-This repository contains an advanced Retrieval-Augmented Generation (RAG) pipeline that combines hybrid search (Dense + Sparse) with Reciprocal Rank Fusion (RRF), and leverages Google's Gemini models for powerful reranking and response generation with precise source citations.
+[![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://python.org)
+[![ChromaDB](https://img.shields.io/badge/VectorDB-ChromaDB-orange)](https://www.trychroma.com/)
+[![Gemini](https://img.shields.io/badge/LLM-Gemini-blueviolet?logo=google)](https://ai.google.dev/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-## 🌟 Key Features
+A production-inspired **Hybrid RAG (Retrieval-Augmented Generation)** system combining dense vector search, sparse BM25 retrieval, and Reciprocal Rank Fusion — now refactored into a clean, modular architecture.
 
-* **Hybrid Retrieval System:**
-  * **Dense Retrieval:** Uses `sentence-transformers` (`all-MiniLM-L6-v2`) and **ChromaDB** for semantic search.
-  * **Sparse Retrieval:** Uses **BM25** (`rank_bm25`) for exact keyword matching.
-* **Reciprocal Rank Fusion (RRF):** Combines the results of dense and sparse searches mathematically to get the best of both worlds.
-* **LLM Reranking:** Sends the top 20 candidates to the **Gemini API** to select the absolute top 5 most contextually relevant chunks.
-* **Citation-Backed Generation:** Uses the Gemini API to answer the user's query while strictly citing the sources inline (e.g., `[1]`, `[2]`).
-* **Evaluation Module:** Built-in evaluation script to test the pipeline against a truth dataset and verify citation coverage and relevance.
+---
 
-## 📁 Project Structure
+## Architecture
+
+```
+User Query
+    │
+    ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  ingestion/ │ →  │  chunking/  │ →  │ embeddings/ │
+│  loader.py  │    │ splitter.py │    │ encoder.py  │
+└─────────────┘    └─────────────┘    └──────┬──────┘
+                                             │
+                                      ┌──────▼──────┐
+                                      │  vectordb/  │
+                                      │chroma_store │
+                                      └──────┬──────┘
+                                             │
+User Query ─────────────────────────► retrieval/
+                                      hybrid_search.py
+                                      (Dense + BM25 + RRF)
+                                             │
+                                      ┌──────▼──────┐
+                                      │    llm/     │
+                                      │ reranker.py │ ← Skip-rerank optimisation
+                                      └──────┬──────┘
+                                             │
+                                      ┌──────▼──────┐
+                                      │  prompts/   │
+                                      │templates.py │
+                                      └──────┬──────┘
+                                             │
+                                      ┌──────▼──────┐
+                                      │    llm/     │
+                                      │gemini_client│
+                                      └──────┬──────┘
+                                             │
+                                      ┌──────▼──────┐
+                                      │   Answer    │
+                                      │ + Sources   │
+                                      └─────────────┘
+```
+
+---
+
+## Project Structure
 
 ```
 rag-project/
-├── data/
-│   └── belgeler/        # Put your .txt and .pdf files here
-├── db/                  # Auto-generated ChromaDB storage and BM25 chunks
-├── src/
-│   ├── ingest.py        # Reads docs, chunks them, and stores embeddings
-│   ├── search.py        # Performs Hybrid Search (ChromaDB + BM25) and RRF fusion
-│   ├── rerank.py        # Sends top 20 to Gemini for top-5 reranking
-│   ├── generate.py      # Generates the final answer with citations via Gemini
-│   └── eval.py          # Runs tests from eval_set.json
-├── eval_set.json        # Custom question-answer pairs for evaluation
-├── main.py              # Interactive CLI application
-├── requirements.txt     # Python dependencies
-├── .env                 # Environment variables (API Keys)
-└── .gitignore
+├── config.yaml          # Central configuration (models, thresholds, paths)
+├── main.py              # CLI entry point
+├── requirements.txt
+├── .env                 # API keys (not committed)
+├── .gitignore
+│
+├── ingestion/           # File loading (txt, pdf)
+│   └── loader.py
+│
+├── chunking/            # Sentence-aware document splitting
+│   └── splitter.py
+│
+├── embeddings/          # SentenceTransformer encoder
+│   └── encoder.py
+│
+├── vectordb/            # ChromaDB store & query
+│   └── chroma_store.py
+│
+├── retrieval/           # Hybrid search: Dense + BM25 + RRF
+│   └── hybrid_search.py
+│
+├── prompts/             # Prompt templates (versioned, reusable)
+│   └── templates.py
+│
+├── llm/                 # LLM clients (Gemini) + reranker
+│   ├── gemini_client.py
+│   └── reranker.py
+│
+├── api/                 # FastAPI HTTP endpoints
+│   └── app.py
+│
+├── utils/               # Pipeline orchestration helpers
+│   └── helpers.py
+│
+├── tests/               # Evaluation harness + unit tests
+│   ├── eval.py
+│   └── test_skip_rerank.py
+│
+├── logs/                # Runtime logs (gitignored except .gitkeep)
+├── data/belgeler/       # Source documents (.txt, .pdf)
+└── db/                  # ChromaDB + chunks.json (gitignored)
 ```
 
-## 🚀 Getting Started
+---
 
-### 1. Install Dependencies
+## Quick Start
 
-Make sure you have Python installed, then install the required packages:
+### 1. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Set Up API Keys
-
-This project uses the Google Gemini API for reranking and generating answers. 
-1. Get a free API key from [Google AI Studio](https://aistudio.google.com/apikey).
-2. Create a `.env` file in the root directory (already ignored by Git):
-   ```env
-   GEMINI_API_KEY=AIzaSy_YOUR_API_KEY_HERE
-   ```
-
-### 3. Ingest Documents
-
-Drop your `.txt` or `.pdf` files into the `data/belgeler/` folder. 
-Run the ingestion script to chunk the texts, create embeddings, and build the search index:
+### 2. Set up API key
 
 ```bash
-python src/ingest.py
+# .env
+GEMINI_API_KEY=your_key_here
 ```
-*Note: The first time you run this, it will download the sentence-transformer model (~80MB).*
 
-### 4. Run the RAG Pipeline
+### 3. Add documents
 
-Start the interactive CLI to ask questions about your documents:
+Place `.txt` or `.pdf` files in `data/belgeler/`.
+
+### 4. Ingest documents
+
+```bash
+python utils/helpers.py
+```
+
+### 5. Run Q&A
 
 ```bash
 python main.py
 ```
 
-Type your question and watch the pipeline search, rerank, and generate a well-cited answer!
-
-## 🧪 Evaluation
-
-To evaluate the system, add some questions and expected keywords into `eval_set.json`:
-
-```json
-[
-  {
-    "question": "What is machine learning?",
-    "expected_keywords": ["learning", "data", "algorithms"]
-  }
-]
-```
-
-Then run the evaluation script to see how well the pipeline performs (verifying both citations and keywords):
+### 6. (Optional) Run as API
 
 ```bash
-python src/eval.py
-```
-*(Note: If you are using the free tier of the Gemini API, you may occasionally see a `503 UNAVAILABLE` error during heavy automated eval tests. Simply wait a minute and retry.)*
-
-## 📊 Dense vs Hybrid Search Comparison
-
-We ran a comparison test to demonstrate why Hybrid Search is necessary. When querying *"Transformer mimarisinin avantajları nelerdir?"* (What are the advantages of the Transformer architecture?):
-
-**Only Dense Search (ChromaDB):**
-1. `nlp_temelleri.txt` ✅ (Correctly identifies Transformers)
-2. `veri_bilimi.txt` ❌ (Completely unrelated text about Data Science metrics)
-3. `veri_bilimi.txt` ❌ (Unrelated text about Feature Engineering)
-*Why? Dense search alone can sometimes be biased by the semantic structure of sentences rather than strict keyword matching.*
-
-**Hybrid Search (Dense + BM25 + RRF):**
-1. `nlp_temelleri.txt` ✅ (Correctly identifies Transformers)
-2. `nlp_temelleri.txt` ✅ (Related context about NLP and Word Embeddings)
-3. `veri_bilimi.txt` ❌
-*Why? BM25 caught the exact keyword "Transformer" and "RNN" to boost the relevance of the NLP document, resulting in much richer and more accurate candidates for the LLM.*
-
-## 🧪 Eval Results
-
-| Metric | Score |
-|--------|-------|
-| Overall Accuracy | 80% (4/5) |
-| Citation Coverage | 14/14 successful citations |
-| Hybrid vs Dense | BM25 removed 2 irrelevant chunks |
-| Resilience | 503 errors handled via retry + fallback |
-
-Tested on 3 Turkish documents (Yapay Zeka, Veri Bilimi, NLP Temelleri).
-
-## 🎬 Demo
-
-```
-$ python main.py
-
-==================================================
-   RAG Pipeline -- Soru-Cevap
-==================================================
-
-❓ SORU: Transformer mimarisinin geleneksel RNN modellerine göre avantajı nedir?
-
-🔍 [1/3] Hibrit arama yapılıyor (Dense + BM25 + RRF)...
-   → 7 aday chunk bulundu.
-
-🎯 [2/3] Reranking yapılıyor (Gemini)...
-[RERANK] Gemini'ye 7 aday gönderiliyor...
-[RERANK] Top 5 parça seçildi.
-
-✍️  [3/3] Yanıt üretiliyor (Gemini)...
-[GENERATE] Yanıt üretildi (490 karakter).
-
-============================================================
-📝 YANIT:
-------------------------------------------------------------
-Transformer mimarisi, RNN'ye kıyasla birçok kritik avantaj sunar:
-
-* **Paralel İşleme:** RNN'ler sıralı işler; Transformer tüm sekansı
-  aynı anda işler. Bu eğitimi dramatik biçimde hızlandırır [1].
-* **Öz-Dikkat (Self-Attention):** Cümledeki tüm kelimeler arasındaki
-  uzun menzilli bağımlılıkları doğrudan yakalar [1].
-* **Hafıza Kaybı Yok:** RNN'lerin gradient vanishing sorunu yoktur;
-  Transformer bu problemi mimari olarak aşar [2].
-
-📚 KAYNAKLAR: [1] nlp_temelleri.txt  [2] nlp_temelleri.txt
-============================================================
-
-[EVAL] 5 soru değerlendiriliyor...
-[1/5] ✓ BAŞARILI — Atıf: 1/1
-[2/5] ✓ BAŞARILI — Atıf: 5/5
-[3/5] ✓ BAŞARILI — Atıf: 3/3
-[4/5] ✗ BAŞARISIZ — Atıf: 0/0
-[5/5] ✓ BAŞARILI — Atıf: 5/5
-[SONUÇ] Doğruluk oranı: 80.0% (4/5)
+uvicorn api.app:app --reload
+# → POST http://localhost:8000/query  {"question": "..."}
+# → POST http://localhost:8000/ingest
+# → GET  http://localhost:8000/health
 ```
 
-## 🛠 Technologies Used
-* **[ChromaDB](https://www.trychroma.com/):** Vector database for semantic search.
-* **[Sentence-Transformers](https://sbert.net/):** Lightweight embedding generation.
-* **[Rank-BM25](https://pypi.org/project/rank-bm25/):** Keyword-based sparse retrieval.
-* **[Google GenAI SDK](https://github.com/google/genai-python):** LLM integration for reranking and generation.
-* **[PyMuPDF (fitz)](https://pymupdf.readthedocs.io/):** High-speed PDF parsing.
+---
+
+## Configuration
+
+All settings are in `config.yaml`:
+
+```yaml
+embedding:
+  model: "all-MiniLM-L6-v2"
+
+chunking:
+  chunk_size: 500
+  chunk_overlap: 50
+
+reranker:
+  mode: "local"          # "local" | "gemini"
+  skip_threshold: 0.03   # skip reranker when top-1 dominates
+
+llm:
+  model: "gemini-flash-latest"
+  temperature: 0.2
+```
+
+---
+
+## Key Features
+
+| Feature | Module | Description |
+|---|---|---|
+| **Sentence-aware chunking** | `chunking/splitter.py` | Never cuts mid-sentence; table-line detection |
+| **Hybrid retrieval** | `retrieval/hybrid_search.py` | Dense (ChromaDB) + Sparse (BM25) + RRF |
+| **Skip-rerank** | `llm/reranker.py` | Bypass reranker for high-confidence queries |
+| **Local reranker** | `llm/reranker.py` | cross-encoder/ms-marco-MiniLM-L-6-v2 |
+| **Prompt templates** | `prompts/templates.py` | Versioned, separated from model logic |
+| **FastAPI** | `api/app.py` | REST endpoints for integration |
+| **Eval harness** | `tests/eval.py` | Citation check + keyword relevance + latency |
+
+---
+
+## Evaluation
+
+```bash
+# Standard eval
+python tests/eval.py
+
+# Compare rerankers (Gemini vs Local latency)
+python tests/eval.py --compare-rerankers
+
+# Skip-rerank unit tests
+python tests/test_skip_rerank.py
+```
+
+---
+
+## Community Improvements (v1.1)
+
+| Contributor | Improvement |
+|---|---|
+| **Ahmet Özel** | Sentence-aware chunking replacing fixed 500-char splits |
+| **Gunjan Tailor** | Skip-rerank optimisation — bypass reranker for high-confidence queries |
+| **Tae Kim** | Local cross-encoder fallback — eliminates Gemini API dependency for reranking |
+
+---
+
+## License
+
+MIT

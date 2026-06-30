@@ -1,91 +1,100 @@
 """
-main.py — Kullanıcıdan soru alır, sırayla search → rerank → generate adımlarını çağırır,
-yanıtı ve kaynak parçalarını ekrana basar.
+main.py — CLI entry point for the Hybrid RAG Pipeline.
+
+Pipeline flow:
+  User Query → retrieval/hybrid_search → llm/reranker → llm/gemini_client → Answer
+
+Run:
+  python main.py
 """
 
 import sys
 import os
 
-# Windows konsolunda UTF-8 zorla
-if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+# Windows: force UTF-8 output
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-# src/ dizinini path'e ekle
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+# Add project root to path for module imports
+ROOT = os.path.dirname(__file__)
+sys.path.insert(0, ROOT)
 
-from search import search
-from rerank import rerank
-from generate import generate
+from retrieval.hybrid_search import search
+from llm.reranker import rerank, get_skip_stats
+from llm.gemini_client import generate
 
 
-def print_separator(char="=", width=60):
+def print_sep(char="=", width=60):
     print(char * width)
 
 
 def run_pipeline(query: str):
-    print_separator()
-    print(f"❓ SORU: {query}")
-    print_separator()
+    print_sep()
+    print(f"❓ QUESTION: {query}")
+    print_sep()
 
-    # 1. Arama
-    print("\n🔍 [1/3] Hibrit arama yapılıyor (Dense + BM25 + RRF)...")
+    # 1. Hybrid Retrieval
+    print("\n🔍 [1/3] Hybrid search (Dense + BM25 + RRF)...")
     candidates = search(query)
-    print(f"   → {len(candidates)} aday chunk bulundu.")
+    print(f"   → {len(candidates)} candidate chunks found.")
 
     if not candidates:
-        print("[UYARI] Hiçbir sonuç bulunamadı. Lütfen önce 'python src/ingest.py' çalıştırın.")
+        print("[WARN] No results found. Run: python utils/helpers.py")
         return
 
-    # 2. Reranking
-    print("\n🎯 [2/3] Reranking yapılıyor (Gemini)...")
-    top5 = rerank(query, candidates)
-    print(f"   → Top {len(top5)} parça seçildi.")
+    # 2. Reranking (with skip-rerank optimisation)
+    print("\n🎯 [2/3] Reranking...")
+    top_chunks = rerank(query, candidates)
+    print(f"   → Top {len(top_chunks)} chunks selected.")
 
-    # 3. Yanıt üretimi
-    print("\n✍️  [3/3] Yanıt üretiliyor (Gemini)...")
-    result = generate(query, top5)
+    # 3. Answer Generation
+    print("\n✍️  [3/3] Generating answer (Gemini)...")
+    result = generate(query, top_chunks)
 
-    # Sonuçları göster
-    print_separator("=")
-    print("📝 YANIT:")
-    print_separator("-")
+    # Display results
+    print_sep()
+    print("📝 ANSWER:")
+    print_sep("-")
     print(result["answer"])
 
-    print_separator("=")
-    print("📚 KULLANILAN KAYNAKLAR:")
-    print_separator("-")
+    print_sep()
+    print("📚 SOURCES:")
+    print_sep("-")
     for source in result["sources"]:
         print(f"  [{source['number']}] {source['source']}")
         print(f"      {source['text_preview']}...")
         print()
 
-    print_separator()
+    # Skip-rerank stats
+    stats = get_skip_stats()
+    print(f"⚡ Skip-rerank: {stats['skip_rate']}")
+    print_sep()
 
 
 def main():
-    print("=" * 50)
-    print("   RAG Pipeline -- Soru-Cevap")
-    print("=" * 50)
-    print("  Cikmak icin 'q' veya 'exit' yazin.\n")
+    print_sep()
+    print("   Hybrid RAG Pipeline — Q&A")
+    print_sep()
+    print("  Type 'q' or 'exit' to quit.\n")
 
     while True:
         try:
-            query = input("Sorunuzu girin: ").strip()
+            query = input("Your question: ").strip()
         except (EOFError, KeyboardInterrupt):
-            print("\nÇıkılıyor...")
+            print("\nExiting...")
             break
 
         if not query:
             continue
-        if query.lower() in ("q", "exit", "quit", "çık"):
-            print("Çıkılıyor...")
+        if query.lower() in ("q", "exit", "quit"):
+            print("Exiting...")
             break
 
         try:
             run_pipeline(query)
         except Exception as e:
-            print(f"\n[HATA] {e}")
+            print(f"\n[ERROR] {e}")
             import traceback
             traceback.print_exc()
 

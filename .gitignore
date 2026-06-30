@@ -1,5 +1,39 @@
-# .env dosyasını git'e gönderme!
-.env
+# Hybrid RAG Project — .gitignore
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+*.env
+
+# Database / Vector Store
 db/
+
+# Logs
+logs/*.log
+
+# Eval reports (generated artifacts)
+eval_report.json
+eval_compare_report.json
+
+# Sentence-transformers model cache
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Data (large files — add your own if needed)
+# data/belgeler/
