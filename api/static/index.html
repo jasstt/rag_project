@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Assistant — Hybrid AI Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d0f14;
+      --surface:     #141720;
+      --surface2:    #1c2030;
+      --border:      #252a3a;
+      --accent:      #6c63ff;
+      --accent2:     #a78bfa;
+      --accent-glow: rgba(108,99,255,.25);
+      --user-bg:     #1e2640;
+      --ai-bg:       #141b2e;
+      --text:        #e2e8f0;
+      --text-muted:  #64748b;
+      --text-dim:    #94a3b8;
+      --green:       #22d3a6;
+      --orange:      #fb923c;
+      --red:         #f87171;
+      --radius:      14px;
+      --shadow:      0 8px 32px rgba(0,0,0,.5);
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .logo {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .header-text h1 {
+      font-size: 17px; font-weight: 700; letter-spacing: -0.3px;
+    }
+    .header-text p {
+      font-size: 12px; color: var(--text-muted); margin-top: 1px;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    .status-dot.offline { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .4; }
+    }
+
+    .status-text { font-size: 12px; color: var(--text-muted); }
+
+    .ingest-btn {
+      padding: 7px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 8px;
+      font-size: 12px; font-family: inherit;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ingest-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent2);
+      background: rgba(108,99,255,.08);
+    }
+    .ingest-btn:disabled {
+      opacity: .5; cursor: not-allowed;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    .sidebar {
+      width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 16px;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      padding: 0 4px;
+      margin-bottom: 4px;
+    }
+
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .stat-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 8px 0;
+    }
+
+    .info-item {
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 6px 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .3px;
+    }
+    .badge-purple { background: rgba(108,99,255,.2); color: var(--accent2); }
+    .badge-green  { background: rgba(34,211,166,.15); color: var(--green); }
+    .badge-orange { background: rgba(251,146,60,.15); color: var(--orange); }
+
+    /* ── Chat Area ───────────────────────────────────────────── */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── Welcome Screen ──────────────────────────────────────── */
+    .welcome {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px;
+      gap: 20px;
+      animation: fadeIn .6s ease;
+    }
+
+    .welcome-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 34px;
+      box-shadow: 0 0 40px var(--accent-glow);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    .welcome h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .welcome p  { font-size: 14px; color: var(--text-muted); max-width: 420px; line-height: 1.6; }
+
+    .example-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .chip {
+      padding: 9px 18px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      font-size: 13px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(108,99,255,.08);
+      transform: translateY(-1px);
+    }
+
+    /* ── Message Bubbles ─────────────────────────────────────── */
+    .message { display: flex; gap: 14px; animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .message.user   { flex-direction: row-reverse; }
+    .message.system { justify-content: center; }
+
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .user .avatar {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+    }
+    .assistant .avatar {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .bubble {
+      max-width: 70%;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .user .bubble {
+      background: var(--user-bg);
+      border: 1px solid #2d3a6a;
+      border-top-right-radius: 4px;
+      color: var(--text);
+    }
+
+    .assistant .bubble {
+      background: var(--ai-bg);
+      border: 1px solid var(--border);
+      border-top-left-radius: 4px;
+      color: var(--text);
+    }
+
+    .bubble-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Sources Section */
+    .sources-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--accent2);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: inherit;
+      transition: opacity .2s;
+    }
+    .sources-toggle:hover { opacity: .8; }
+
+    .sources-panel {
+      margin-top: 10px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sources-panel.open { display: flex; }
+
+    .source-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+
+    .source-title {
+      font-weight: 600;
+      color: var(--accent2);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .source-preview {
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Typing Indicator */
+    .typing {
+      display: flex;
+      gap: 5px;
+      padding: 6px 0;
+    }
+    .typing span {
+      width: 7px; height: 7px;
+      background: var(--accent2);
+      border-radius: 50%;
+      animation: bounce .9s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .15s; }
+    .typing span:nth-child(3) { animation-delay: .3s; }
+
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); }
+      30%          { transform: translateY(-8px); }
+    }
+
+    /* System message */
+    .sys-msg {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      display: inline-block;
+    }
+
+    /* ── Input Area ──────────────────────────────────────────── */
+    .input-area {
+      padding: 16px 32px 20px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px 12px 18px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .input-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    #questionInput {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+      max-height: 140px;
+      min-height: 22px;
+    }
+    #questionInput::placeholder { color: var(--text-muted); }
+
+    .send-btn {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+    .send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 16px var(--accent-glow); }
+    .send-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .send-btn svg { width: 18px; height: 18px; }
+
+    .input-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding: 0 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ── Notification Toast ──────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .3s;
+      pointer-events: none;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #toast.success { background: rgba(34,211,166,.15); border: 1px solid var(--green); color: var(--green); }
+    #toast.error   { background: rgba(248,113,113,.12); border: 1px solid var(--red); color: var(--red); }
+    #toast.info    { background: rgba(108,99,255,.15); border: 1px solid var(--accent); color: var(--accent2); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">🔮</div>
+  <div class="header-text">
+    <h1>RAG Assistant</h1>
+    <p>Hybrid Dense + BM25 + RRF · Gemini Generation</p>
+  </div>
+  <div class="header-right">
+    <div id="statusDot" class="status-dot offline"></div>
+    <span id="statusText" class="status-text">Connecting...</span>
+    <button class="ingest-btn" id="ingestBtn" onclick="triggerIngest()">
+      <span>⚡</span> Re-Ingest Docs
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Session Stats</div>
+
+    <div class="stat-card">
+      <div class="stat-label">Queries</div>
+      <div class="stat-value" id="statQueries">0</div>
+      <div class="stat-sub">this session</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Skip-Rerank</div>
+      <div class="stat-value" id="statSkip">—</div>
+      <div class="stat-sub">bypassed reranker</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Avg Latency</div>
+      <div class="stat-value" id="statLatency">—</div>
+      <div class="stat-sub">milliseconds</div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sidebar-title">Pipeline</div>
+
+    <div class="info-item">🔍 <span>Dense (ChromaDB)</span></div>
+    <div class="info-item">📚 <span>Sparse (BM25)</span></div>
+    <div class="info-item">⚡ <span>RRF Fusion</span></div>
+    <div class="info-item">🎯 <span>
+      Reranker: <span class="badge badge-purple" id="rerankerBadge">local</span>
+    </span></div>
+    <div class="info-item">🤖 <span>
+      LLM: <span class="badge badge-green">Gemini</span>
+    </span></div>
+
+    <div class="divider"></div>
+    <div class="sidebar-title">API</div>
+    <div class="info-item" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)">
+      POST /query<br>POST /ingest<br>GET  /health
+    </div>
+  </aside>
+
+  <!-- ── Chat ─────────────────────────────────────────────────── -->
+  <div class="chat-area">
+    <div class="messages" id="messages">
+
+      <!-- Welcome Screen -->
+      <div class="welcome" id="welcomeScreen">
+        <div class="welcome-icon">🔮</div>
+        <h2>Hybrid RAG Assistant</h2>
+        <p>Belgelerinden bilgi çek. Dense vektör arama + BM25 + Reciprocal Rank Fusion + Gemini ile cevap al.</p>
+        <div class="example-chips">
+          <div class="chip" onclick="useExample(this)">Tokenization nedir?</div>
+          <div class="chip" onclick="useExample(this)">RAG pipeline nasıl çalışır?</div>
+          <div class="chip" onclick="useExample(this)">BM25 ile dense search farkı nedir?</div>
+          <div class="chip" onclick="useExample(this)">Embedding modeli nedir?</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Input -->
+    <div class="input-area">
+      <div class="input-wrapper">
+        <textarea
+          id="questionInput"
+          placeholder="Sorunuzu yazın... (Enter ile gönder, Shift+Enter yeni satır)"
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Gönder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="input-footer">
+        <span>Hybrid RAG Pipeline v1.2</span>
+        <span id="charCount">0 / 1000</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────
+  const API_BASE = 'http://localhost:8000';
+  let totalQueries = 0;
+  let totalLatency = 0;
+  let skipCount = 0;
+  let totalSkipTotal = 0;
+
+  // ── Health Check ────────────────────────────────────────────────
+  async function checkHealth() {
+    try {
+      const r = await fetch(`${API_BASE}/health`);
+      if (r.ok) {
+        document.getElementById('statusDot').className = 'status-dot';
+        document.getElementById('statusText').textContent = 'API Online';
+      } else { throw new Error(); }
+    } catch {
+      document.getElementById('statusDot').className = 'status-dot offline';
+      document.getElementById('statusText').textContent = 'API Offline';
+    }
+  }
+
+  checkHealth();
+  setInterval(checkHealth, 15000);
+
+  // ── Auto-resize textarea ─────────────────────────────────────────
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+    document.getElementById('charCount').textContent =
+      `${el.value.length} / 1000`;
+  }
+
+  // ── Keyboard handler ─────────────────────────────────────────────
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  // ── Use example chip ─────────────────────────────────────────────
+  function useExample(el) {
+    document.getElementById('questionInput').value = el.textContent;
+    document.getElementById('questionInput').focus();
+    autoResize(document.getElementById('questionInput'));
+  }
+
+  // ── Append message ────────────────────────────────────────────────
+  function appendMessage(role, content, meta = null) {
+    const welcome = document.getElementById('welcomeScreen');
+    if (welcome) welcome.remove();
+
+    const msgs = document.getElementById('messages');
+
+    if (role === 'system') {
+      const div = document.createElement('div');
+      div.className = 'message system';
+      div.innerHTML = `<span class="sys-msg">${content}</span>`;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+      return;
+    }
+
+    const isUser = role === 'user';
+    const avatarEmoji = isUser ? '👤' : '🔮';
+
+    const msg = document.createElement('div');
+    msg.className = `message ${role}`;
+
+    let sourcesHtml = '';
+    if (meta && meta.sources && meta.sources.length > 0) {
+      const items = meta.sources.map(s => `
+        <div class="source-item">
+          <div class="source-title">
+            📄 [${s.number}] ${s.source}
+          </div>
+          <div class="source-preview">${s.text_preview || ''}...</div>
+        </div>
+      `).join('');
+
+      sourcesHtml = `
+        <button class="sources-toggle" onclick="toggleSources(this)">
+          📚 ${meta.sources.length} kaynak göster ▾
+        </button>
+        <div class="sources-panel">
+          ${items}
+        </div>
+      `;
+    }
+
+    let metaHtml = '';
+    if (meta) {
+      metaHtml = `
+        <div class="bubble-meta">
+          ${meta.latency_ms ? `<span class="meta-tag">⚡ ${meta.latency_ms}ms</span>` : ''}
+          ${meta.skip_stats ? `<span class="meta-tag">🎯 ${meta.skip_stats.skipped}/${meta.skip_stats.total} skipped</span>` : ''}
+        </div>
+      `;
+    }
+
+    // Format markdown-ish content
+    const formatted = formatContent(content);
+
+    msg.innerHTML = `
+      <div class="avatar">${avatarEmoji}</div>
+      <div class="bubble">
+        ${formatted}
+        ${sourcesHtml}
+        ${metaHtml}
+      </div>
+    `;
+
+    msgs.appendChild(msg);
+    msgs.scrollTop = msgs.scrollHeight;
+    return msg;
+  }
+
+  function formatContent(text) {
+    // Bold: **text**
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Inline code: `code`
+    text = text.replace(/`([^`]+)`/g, '<code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent2)">$1</code>');
+    // Citations [1] [2]
+    text = text.replace(/\[(\d+)\]/g, '<span class="badge badge-purple">[$1]</span>');
+    // Line breaks
+    text = text.replace(/\n/g, '<br>');
+    return text;
+  }
+
+  function toggleSources(btn) {
+    const panel = btn.nextElementSibling;
+    const open = panel.classList.toggle('open');
+    btn.textContent = open
+      ? `📚 ${panel.children.length} kaynak gizle ▴`
+      : `📚 ${panel.children.length} kaynak göster ▾`;
+  }
+
+  // ── Typing indicator ──────────────────────────────────────────────
+  function showTyping() {
+    const welcome = document.getElementById('welcomeScreen');
+    if (welcome) welcome.remove();
+
+    const msgs = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message assistant';
+    div.id = 'typingIndicator';
+    div.innerHTML = `
+      <div class="avatar">🔮</div>
+      <div class="bubble">
+        <div class="typing">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    `;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+  }
+
+  // ── Send Message ──────────────────────────────────────────────────
+  async function sendMessage() {
+    const input = document.getElementById('questionInput');
+    const question = input.value.trim();
+    if (!question) return;
+
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    input.disabled = true;
+
+    // Clear input
+    input.value = '';
+    input.style.height = 'auto';
+    document.getElementById('charCount').textContent = '0 / 1000';
+
+    // Add user message
+    appendMessage('user', question);
+
+    // Show typing
+    showTyping();
+
+    try {
+      const r = await fetch(`${API_BASE}/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, top_k: 20 })
+      });
+
+      removeTyping();
+
+      if (!r.ok) {
+        const err = await r.json();
+        appendMessage('assistant', `❌ Hata: ${err.detail || 'Bilinmeyen hata.'}`);
+        showToast('Sorgu başarısız.', 'error');
+      } else {
+        const data = await r.json();
+
+        // Update stats
+        totalQueries++;
+        totalLatency += data.latency_ms || 0;
+        if (data.skip_stats) {
+          skipCount = data.skip_stats.skipped;
+          totalSkipTotal = data.skip_stats.total;
+        }
+
+        updateStats(data.latency_ms);
+        appendMessage('assistant', data.answer, {
+          sources: data.sources,
+          latency_ms: data.latency_ms,
+          skip_stats: data.skip_stats,
+        });
+      }
+    } catch (e) {
+      removeTyping();
+      appendMessage('system', '⚠️ API\'ye bağlanılamadı. Sunucu çalışıyor mu?');
+      showToast('Bağlantı hatası.', 'error');
+    } finally {
+      sendBtn.disabled = false;
+      input.disabled = false;
+      input.focus();
+    }
+  }
+
+  // ── Ingest ────────────────────────────────────────────────────────
+  async function triggerIngest() {
+    const btn = document.getElementById('ingestBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> Ingesting...';
+    appendMessage('system', '⚡ Dokümanlar yeniden işleniyor...');
+
+    try {
+      const r = await fetch(`${API_BASE}/ingest`, { method: 'POST' });
+      if (r.ok) {
+        appendMessage('system', '✅ Ingest tamamlandı. Artık yeni belgeler aranabilir.');
+        showToast('Ingest başarılı!', 'success');
+      } else {
+        const err = await r.json();
+        appendMessage('system', `❌ Ingest hatası: ${err.detail}`);
+        showToast('Ingest başarısız.', 'error');
+      }
+    } catch {
+      appendMessage('system', '⚠️ API\'ye bağlanılamadı.');
+      showToast('Bağlantı hatası.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span>⚡</span> Re-Ingest Docs';
+    }
+  }
+
+  // ── Stats Update ──────────────────────────────────────────────────
+  function updateStats(latencyMs) {
+    document.getElementById('statQueries').textContent = totalQueries;
+    const avg = totalQueries > 0 ? Math.round(totalLatency / totalQueries) : 0;
+    document.getElementById('statLatency').textContent = avg > 0 ? `${avg}ms` : '—';
+    document.getElementById('statSkip').textContent =
+      totalSkipTotal > 0 ? `${skipCount}/${totalSkipTotal}` : '—';
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────
+  function showToast(msg, type = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    setTimeout(() => { t.className = ''; }, 3000);
+  }
+</script>
+</body>
+</html>
