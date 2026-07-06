@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "rag-pipeline": {
+      "command": "python",
+      "args": [
+        "C:/Users/VICTUS/OneDrive/Desktop/proje/rag-project/mcp_server.py"
+      ],
+      "cwd": "C:/Users/VICTUS/OneDrive/Desktop/proje/rag-project",
+      "env": {}
+    }
+  }
+}
